@@ -14,7 +14,8 @@ Welcome to `rerankers`! Our goal is to provide users with a simple API to use an
 
 ## Updates
 
-- v0.1.2: 🆕 Voyage reranking API
+- v0.2.0: 🆕 [FlashRank](https://github.com/PrithivirajDamodaran/FlashRank) rerankers, Basic async support thanks to [@tarunamasa](https://github.com/tarunamasa), MixedBread.ai reranking API
+- v0.1.2: Voyage reranking API
 - v0.1.1: Langchain integration fixed!
 - v0.1.0: Initial release
 
@@ -55,6 +56,9 @@ pip install "rerankers[gpt]"
 # API-based rerankers (Cohere, Jina, soon MixedBread)
 pip install "rerankers[api]"
 
+# FlashRank rerankers (ONNX-optimised, very fast on CPU)
+pip install "rerankers[fastrank]"
+
 # All of the above
 pip install "rerankers[all]"
 ```
@@ -70,6 +74,12 @@ ranker = Reranker('cross-encoder')
 
 # Specific cross-encoder
 ranker = Reranker('mixedbread-ai/mxbai-rerank-xlarge-v1', model_type='cross-encoder')
+
+# FlashRank default. You can specify a 'lang' parameter to load a multilingual version!
+ranker = Reranker('flashrank')
+
+# Specific flashrank model.
+ranker = Reranker('ce-esci-MiniLM-L12-v2', model_type='flashrank')
 
 # Default T5 Seq2Seq reranker
 ranker = Reranker("t5")
@@ -115,6 +125,15 @@ RankedResults(results=[Result(doc_id=1, text='I really like you', score=0.261708
 
 You don't need to pass `doc_ids`! If not provided, they'll be auto-generated as integers corresponding to the index of a document in `docs`.
 
+You can also use `rank_async`, which is essentially just a wrapper to turn `rank()` into a coroutine. The result will be the same:
+
+```python
+```python
+> results = await ranker.rank_async(query="I love you", docs=["I hate you", "I really like you"], doc_ids=[0,1])
+> results
+RankedResults(results=[Result(doc_id=1, text='I really like you', score=0.26170814, rank=1), Result(doc_id=0, text='I hate you', score=0.079210326, rank=2)], query='I love you', has_scores=True)
+```
+
 All rerankers will return a `RankedResults` object, which is a pydantic object containing a list of `Result` objects and some other useful information, such as the original query. You can retrieve the top `k` results from it by running `top_k()`:
 
 ```python
@@ -138,8 +157,8 @@ Models:
 - ✅ Any standard SentenceTransformer or Transformers cross-encoder
 - 🟠 RankGPT (Implemented using original repo, but missing the rankllm's repo improvements)
 - ✅ T5-based pointwise rankers (InRanker, MonoT5...)
-- ✅ Cohere API rerankers
-- ✅ Jina API rerankers
+- ✅ Cohere, Jina, Voyage and MixedBread API rerankers
+- ✅ [FlashRank](https://github.com/PrithivirajDamodaran/FlashRank) rerankers (ONNX-optimised models, very fast on CPU)
 - 🟠 ColBERT-based reranker - not a model initially designed for reranking, but quite strong (Implementation could be optimised and is from a third-party implementation.)
 - 📍 MixedBread API (Reranking API not yet released)
 - 📍⭐ RankLLM/RankZephyr (Proper RankLLM implementation will replace the RankGPT one, and introduce RankZephyr support)
